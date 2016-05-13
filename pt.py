@@ -8,12 +8,13 @@ def sq(x):
     return x * x
 
 def f(x, t=0):
-    c1 = max(0, 0.002 - sq(x[0] - 0.25) - sq(x[1] - 0.25))
-    c2 = max(0, 0.002 - sq(x[0] - 0.75) - sq(x[1] - 0.25))
-    c3 = max(0, 0.002 - sq(x[0] - 0.75) - sq(x[1] - 0.75))
-    c4 = max(0, 0.002 - sq(x[0] - 0.25) - sq(x[1] - 0.75))
-    c5 = max(0, 0.002 - sq(x[0] - 0.5 ) - sq(x[1] - 0.5 ))
-    return pow(c1 + c2 + c3 + c4 + c5, 1 - t)
+    k = 4 * (t - 1)
+    c1 = pow(sq(x[0] - 0.25) + sq(x[1] - 0.25), k)
+    c2 = pow(sq(x[0] - 0.75) + sq(x[1] - 0.25), k)
+    c3 = pow(sq(x[0] - 0.75) + sq(x[1] - 0.75), k)
+    c4 = pow(sq(x[0] - 0.25) + sq(x[1] - 0.75), k)
+    c5 = pow(sq(x[0] - 0.5 ) + sq(x[1] - 0.5 ), k)
+    return c1 + c2 + c3 + c4 + c5
 
 def mutate(p):
     if random() < 0.5:
@@ -29,8 +30,9 @@ def mutate(p):
 
 def mh_step(x, t=0):
     y = mutate(x)
+    f1 = f(y, t)
     f2 = f(x, t)
-    a = min(1, 1 if f2 == 0 else f(y, t) / f2)
+    a = min(1, 0 if f1 == 0 else 1 if f2 == 0 else f1 / f2)
     if random() < a:
         return True, y
     return False, x
@@ -40,7 +42,7 @@ def sim_mh():
     x0 = random(), random()
     x = x0
     z = []
-    M = 10000
+    M = 100000
     c = 0
 
     for i in range(0, M):
@@ -53,13 +55,13 @@ def sim_mh():
     plt.hexbin([x for x, y in z], [y for x, y in z])
 
 def gen_temps(K):
-    return flipud(append(cumprod(repeat(0.999, K - 1)), 0))
+    return flipud(append(cumprod(repeat(0.9, K - 1)), 0))
 
 def sim_pt_mh():
     # PTMH
-    K = 20                # Number of temperatures (of chains)
-    N = 1                 # Number of steps before exchange
-    M = 10000            # Number of MH steps over all chains
+    K = 40                # Number of temperatures (of chains)
+    N = 2                 # Number of steps before exchange
+    M = 100000             # Number of MH steps over all chains
 
     T = gen_temps(K)
     if K < 200:
@@ -95,10 +97,10 @@ def sim_pt_mh():
 
 def sim_fopt_mh():
     # FOPTMH
-    K = 20                # Number of temperatures (of chains)
-    N = 5                 # Number of steps before exchange
-    C = 5                 # Number of PTMH steps before temperature update
-    M = 10000             # Number of MH steps over all chains
+    K = 40                # Number of temperatures (of chains)
+    N = 2                 # Number of steps before exchange
+    C = 2                 # Number of PTMH steps before temperature update
+    M = 100000             # Number of MH steps over all chains
 
     T = gen_temps(K)
     if K < 200:
@@ -171,12 +173,23 @@ def sim_fopt_mh():
 def main():
     fig = plt.figure(figsize=(20,10))
 
-    s1 = fig.add_subplot(131)
+    s1 = fig.add_subplot(141)
     sim_mh()
-    s2 = fig.add_subplot(132, sharex=s1, sharey=s1)
+    s2 = fig.add_subplot(142, sharex=s1, sharey=s1)
     sim_pt_mh()
-    s3 = fig.add_subplot(133, sharex=s1, sharey=s1)
+    s3 = fig.add_subplot(143, sharex=s1, sharey=s1)
     sim_fopt_mh()
+    plt.axis((0, 1, 0, 1))
+
+    s4 = fig.add_subplot(144)
+    xx = linspace(0, 1, 100)
+    yy = linspace(0, 1, 100)
+    Z = zeros((len(xx), len(yy)))
+    for i in range(len(xx)):
+        for j in range(len(yy)):
+            Z[i, j] = f((xx[i],yy[j]), 0.95)
+    plt.contour(xx, yy, Z)
+
     plt.show()
 
 if __name__ == "__main__":
