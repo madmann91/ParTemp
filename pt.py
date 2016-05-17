@@ -8,7 +8,7 @@ def sq(x):
     return x * x
 
 def f(x, t=0):
-    k = 4 * (t - 1)
+    k = 2 * (t - 1)
     c1 = pow(sq(x[0] - 0.25) + sq(x[1] - 0.25), k)
     c2 = pow(sq(x[0] - 0.75) + sq(x[1] - 0.25), k)
     c3 = pow(sq(x[0] - 0.75) + sq(x[1] - 0.75), k)
@@ -61,7 +61,7 @@ def sim_pt_mh():
     # PTMH
     K = 40                # Number of temperatures (of chains)
     N = 2                 # Number of steps before exchange
-    M = 100000             # Number of MH steps over all chains
+    M = 100000            # Number of MH steps over all chains
 
     T = gen_temps(K)
     if K < 200:
@@ -99,8 +99,8 @@ def sim_fopt_mh():
     # FOPTMH
     K = 40                # Number of temperatures (of chains)
     N = 2                 # Number of steps before exchange
-    C = 2                 # Number of PTMH steps before temperature update
-    M = 100000             # Number of MH steps over all chains
+    C = 10                # Number of PTMH steps before temperature update
+    M = 100000            # Number of MH steps over all chains
 
     T = gen_temps(K)
     if K < 200:
@@ -133,18 +133,6 @@ def sim_fopt_mh():
                     x[j], x[j - 1] = x[j - 1], x[j]
                     Nu[j] += 1
                     Nd[j - 1] += 1
-            for j in range(0, K):
-                j1 = randint(0, K)
-                j2 = randint(0, K)
-                if j1 > j2:
-                    j1, j2 = j2, j1
-                k1 = f(x[j1], T[j2]) * f(x[j2], T[j1])
-                k2 = f(x[j1], T[j1]) * f(x[j], T[j2])
-                a = min(1, 0 if k1 == 0 else 1 if k2 == 0 else k1 / k2)
-                if random() < a:
-                    x[j2], x[j1] = x[j1], x[j2]
-                    Nu[j2] += 1
-                    Nd[j1] += 1
 
         # Update temperatures
         Ns = Nu + Nd
